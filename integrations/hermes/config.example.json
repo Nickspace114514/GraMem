@@ -1,0 +1,19 @@
+{
+  "model": "qwen3.8-flash",
+  "api_key_env": "DASHSCOPE_API_KEY",
+  "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+  "recall_tokens": 1024,
+  "extraction_input_tokens": 4000,
+  "extraction_tokens": 1800,
+  "embedding_model": "",
+  "graph_url": "redis://127.0.0.1:6380/0",
+  "graph_name": "gramem",
+  "owner_id": "your-canonical-owner-id",
+  "trusted_cli_owner": true,
+  "aliases": {
+    "email:owner@example.com": "your-canonical-owner-id",
+    "teams:verified-transport-user-id": "your-canonical-owner-id"
+  },
+  "capture_owner_in_groups": false,
+  "timezone": "Asia/Singapore"
+}

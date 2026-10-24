@@ -1,0 +1,24 @@
+services:
+  graph:
+    image: falkordb/falkordb:v4.12.0@sha256:7927eb194df0fadf70e2deb6c20c8178743ec92aacd739c790f8a35ce5dee613
+    container_name: gramem-graph
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "3"
+    ports:
+      - "127.0.0.1:6380:6379"
+    volumes:
+      - graph-data:/data
+    entrypoint: ["redis-server"]
+    command: ["--loadmodule", "/var/lib/falkordb/bin/falkordb.so", "EFFECTS_THRESHOLD", "0", "--appendonly", "yes", "--save", "300", "10", "--dir", "/data"]
+    mem_limit: 2g
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+volumes:
+  graph-data:

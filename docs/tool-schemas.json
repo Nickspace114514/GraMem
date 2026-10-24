@@ -1,0 +1,217 @@
+[
+  {
+    "name": "gramem_chats",
+    "description": "Retrieve private chat records across verified platforms and contexts: overview, search, read verbatim text and linked assistant audio, export original JSON, bundle chat/audio originals as ZIP, or export one audio original. TTS input is synthesis evidence, not an ASR transcript. Persistent no-mention exclusions apply to all actions. Cite platform, session, timestamp and record ID.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string",
+          "enum": [
+            "overview",
+            "search",
+            "read",
+            "export",
+            "audio",
+            "bundle"
+          ]
+        },
+        "query": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "audio_id": {
+          "type": "string",
+          "description": "Linked audio ID returned by read; audio action only."
+        },
+        "platform": {
+          "type": "string"
+        },
+        "session": {
+          "type": "string"
+        },
+        "after": {
+          "type": "number",
+          "description": "Unix timestamp, inclusive"
+        },
+        "before": {
+          "type": "number",
+          "description": "Unix timestamp, inclusive"
+        },
+        "start": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Use next from the previous response. Search: result offset. Read: character offset across user text followed by assistant text; continue until next is null."
+        }
+      },
+      "required": [
+        "action"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "gramem_network",
+    "description": "Explore the memory net linking memories, recorded events, documents, chats, summaries, topics and contexts. Memory weights mirror authoritative confidence, strength, importance and lifecycle; other nodes aggregate associated memories, null means unassessed. NEXT is time order, not causation. Historical mode includes old and pending records, whose status must be respected. Excluded nodes never participate in traversal.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "hops": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3
+        },
+        "historical": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "gramem_knowledge",
+    "description": "Scoped durable file knowledge: search, list, inspect, read source chunks, import a requested local file, export original, retry parsing, or control a document. Originals are private; shared channels cannot access private files.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string",
+          "enum": [
+            "search",
+            "list",
+            "get",
+            "read",
+            "import",
+            "export",
+            "retry",
+            "forget",
+            "suppress",
+            "reactivate"
+          ]
+        },
+        "query": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string",
+          "description": "Local file explicitly requested by the current user; import only."
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "start": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "page": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "historical": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "action"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "gramem_recall",
+    "description": "Recall scoped memory or temporal relations.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string"
+        },
+        "historical": {
+          "type": "boolean"
+        },
+        "graph": {
+          "type": "boolean"
+        },
+        "hops": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3
+        }
+      },
+      "required": [
+        "query"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "gramem_memory",
+    "description": "Manage memory; controls automatically verify current user intent. Ask for clarification only if the scope is ambiguous. Forgetting a document chunk erases the entire document source.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string",
+          "enum": [
+            "remember",
+            "update",
+            "merge",
+            "list",
+            "confirm",
+            "reject",
+            "forget",
+            "suppress",
+            "reactivate",
+            "reauthorize",
+            "profile",
+            "reflect",
+            "status"
+          ]
+        },
+        "id": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "evidence": {
+          "type": "string",
+          "description": "Exact current user wording supporting a write."
+        },
+        "type": {
+          "type": "string"
+        },
+        "slot": {
+          "type": "string"
+        },
+        "targets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "group_safe": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "action"
+      ],
+      "additionalProperties": false
+    }
+  }
+]

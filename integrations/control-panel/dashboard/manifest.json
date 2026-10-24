@@ -1,0 +1,1 @@
+{"name":"hermes-control","label":"GraMem","description":"GraMem 记忆、聊天、身份及阿里官方模型管理","icon":"Network","version":"1.8.1","tab":{"path":"/control","position":"start"},"entry":"dist/index.js","css":"dist/style.css","api":"api.py"}

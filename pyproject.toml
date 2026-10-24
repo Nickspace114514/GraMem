@@ -1,0 +1,54 @@
+[project]
+name = "gramem"
+version = "2.5.0"
+description = "Long-term memory engine for AI agents: sourced facts, trustworthy forgetting and a temporal knowledge graph"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE"]
+authors = [{ name = "Nickspace" }]
+keywords = ["ai-agent", "memory", "knowledge-graph", "llm", "sqlite", "falkordb", "hermes"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = ["httpx>=0.28,<1", "redis>=5,<7", "tiktoken>=0.8,<1", "pypdf>=5,<7", "python-docx>=1.1,<2", "Pillow>=11,<13"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<10", "ruff>=0.9,<1", "fastapi>=0.115,<1"]
+documents = ["pypdf>=5,<7", "python-docx>=1.1,<2", "Pillow>=11,<13"]
+
+[project.urls]
+Homepage = "https://github.com/Nickspace114514/GraMem"
+Documentation = "https://github.com/Nickspace114514/GraMem/blob/main/docs/quickstart.md"
+Issues = "https://github.com/Nickspace114514/GraMem/issues"
+Changelog = "https://github.com/Nickspace114514/GraMem/blob/main/CHANGELOG.md"
+
+[project.scripts]
+gramem = "gramem.cli:main"
+
+[project.entry-points."hermes_agent.memory_providers"]
+gramem = "gramem.hermes:register"
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["gramem*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B"]
+ignore = ["E501"]

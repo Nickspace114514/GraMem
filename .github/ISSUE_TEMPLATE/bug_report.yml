@@ -1,0 +1,35 @@
+name: Bug report
+description: Something does not work as documented
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Commands or a minimal config. Remove any API keys, account IDs and personal data.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: GraMem version
+      placeholder: "2.5.0 (output of: pip show gramem)"
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      placeholder: "Python 3.12, Ubuntu 24.04, FalkorDB v4.12.0 / not used"
+  - type: textarea
+    id: logs
+    attributes:
+      label: Output or logs
+      render: shell
