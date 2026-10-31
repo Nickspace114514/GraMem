@@ -993,6 +993,12 @@ class Engine:
         if not self.model or not self.model.available:
             return False
         now = self.clock()
+        # Idle polls must not take the write lock; many pollers share one database.
+        if not self.store.rows(
+            "SELECT 1 FROM sources WHERE (status='pending' OR (status='working' AND retry_at<?)) AND retry_at<=? LIMIT 1",
+            (now, now),
+        ):
+            return False
         with self.store.transaction() as db:
             job = db.execute(
                 "SELECT * FROM sources WHERE (status='pending' OR (status='working' AND retry_at<?)) AND retry_at<=? ORDER BY created LIMIT 1",

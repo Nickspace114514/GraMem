@@ -4,6 +4,7 @@ import hashlib
 import logging
 import re
 import threading
+import time
 from pathlib import Path
 
 from agent.memory_provider import MemoryProvider, spawn_context_thread
@@ -14,6 +15,7 @@ from .engine import Engine, terms
 from .evidence import user_evidence
 from .graph import FalkorGraph
 from .model import Model
+from .polling import FAILURE_LOG_INTERVAL, poll_delay
 from .tokens import compact, count, limit
 
 logger = logging.getLogger(__name__)
@@ -968,6 +970,8 @@ class GraMemProvider(MemoryProvider):
 
     def _run(self):
         last_weekly_check = 0
+        failures = suppressed = 0
+        last_failure_log = 0.0
         while not self._stop.is_set():
             try:
                 self.engine.process_one()
@@ -990,9 +994,21 @@ class GraMemProvider(MemoryProvider):
 
                     weekly(self.engine)
                     last_weekly_check = self.engine.clock()
+                failures = 0
             except Exception:
-                logger.warning("GraMem background work failed; durable jobs retained", exc_info=True)
-            self._stop.wait(1)
+                failures += 1
+                # A failing loop used to log every second per provider; keep the first
+                # traceback and then one summary a minute.
+                now = time.monotonic()
+                suppressed += 1
+                if failures == 1 or now - last_failure_log >= FAILURE_LOG_INTERVAL:
+                    logger.warning(
+                        "GraMem background work failed (%d consecutive, %d since last report); "
+                        "durable jobs retained",
+                        failures, suppressed, exc_info=failures == 1,
+                    )
+                    last_failure_log, suppressed = now, 0
+            self._stop.wait(poll_delay(failures))
 
     def shutdown(self):
         self._stop.set()

@@ -335,6 +335,13 @@ class Knowledge:
 
     def process_one(self, *, id=None):
         now = self.engine.clock()
+        # Idle polls must not take the write lock; many pollers share one database.
+        if not self.store.rows(
+            """SELECT 1 FROM knowledge_documents WHERE
+            (status='queued' OR (status='processing' AND lease<?)) AND (? IS NULL OR id=?) LIMIT 1""",
+            (now, id, id),
+        ):
+            return False
         with self.store.transaction() as db:
             row = db.execute(
                 """SELECT * FROM knowledge_documents WHERE
@@ -699,7 +706,8 @@ class Knowledge:
         now = self.engine.clock()
         if now < getattr(self.engine, "_knowledge_embedding_retry", 0):
             return False
-        with self.store.transaction() as db:
+        # Candidate selection only reads; a read snapshot never takes the write lock.
+        with self.store.read() as db:
             rows = db.execute(
                 "SELECT m.* FROM memories m JOIN knowledge_chunks k ON k.memory_id=m.id JOIN knowledge_documents d ON d.id=k.document_id WHERE m.status='active' AND d.status IN ('ready','partial') AND (m.embedding IS NULL OR m.embedding_space IS NOT ?) ORDER BY m.created",
                 (model.space,),

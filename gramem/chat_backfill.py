@@ -101,6 +101,9 @@ class Backfill:
             raise ValueError('invalid import batch size')
         now = self.e.clock()
         lease = now + max(300,self.e.config.timeout * 3)
+        # Idle polls must not take the write lock; many pollers share one database.
+        if not self.e.store.rows("SELECT 1 FROM chat_backfill_jobs WHERE state IN ('importing','processing') AND lease<? AND retry_at<=? LIMIT 1", (now,now)):
+            return False
         with self.e.store.transaction() as db:
             job = db.execute("SELECT * FROM chat_backfill_jobs WHERE state IN ('importing','processing') AND lease<? AND retry_at<=? ORDER BY updated,created LIMIT 1", (now,now)).fetchone()
             if not job:

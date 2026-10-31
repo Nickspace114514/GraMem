@@ -188,6 +188,15 @@ class Chats:
         if job_id and not principal:
             raise ValueError('processing job requires a principal')
         now = self.e.clock()
+        # Background polls (no explicit principal or job) must not take the write lock when idle.
+        if not principal and not job_id and not self.e.store.rows(
+            '''SELECT 1 FROM chat_turns t WHERE t.status!='redacted'
+            AND NOT EXISTS (SELECT 1 FROM chat_native_state n WHERE n.turn_id=t.id AND n.active=0)
+            AND t.lease<? AND t.retry_at<=? AND (t.organized=0 OR t.status IN ('pending','working') OR
+            t.policy_epoch!=(SELECT coalesce(sum(epoch),0) FROM exclusions WHERE principal=t.principal))
+            LIMIT 1''', (now, now),
+        ):
+            return False
         with self.e.store.transaction() as db:
             if job_id and not db.execute('SELECT 1 FROM chat_backfill_jobs WHERE id=? AND principal=?',
                                          (job_id, principal.key)).fetchone():

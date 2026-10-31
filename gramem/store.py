@@ -53,6 +53,8 @@ def _start_watchdog():
             _WATCHDOG = threading.Thread(target=_watch, name="gramem-lock-watchdog", daemon=True)
             _WATCHDOG.start()
 
+
+SCHEMA_VERSION = 8
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS meta(key TEXT PRIMARY KEY,value INTEGER NOT NULL);
 INSERT OR IGNORE INTO meta VALUES('revision',0);
@@ -152,6 +154,7 @@ CREATE TABLE IF NOT EXISTS chat_backfill_items(
  FOREIGN KEY(turn_id) REFERENCES chat_turns(id));
 PRAGMA user_version=8;
 """
+assert f"PRAGMA user_version={SCHEMA_VERSION};" in SCHEMA
 
 
 class Store:
@@ -184,21 +187,25 @@ class Store:
         self.db.execute("PRAGMA synchronous=FULL")
         self.db.execute("PRAGMA secure_delete=ON")
         try:
-            # Serialize version check, migration and schema creation across provider processes.
-            with self.transaction() as db:
-                version = db.execute("PRAGMA user_version").fetchone()[0]
-                if version not in {0, 2, 3, 4, 5, 6, 7, 8}:
-                    raise RuntimeError(f"unsupported database version {version}")
-                if version == 2:
-                    columns = {r[1] for r in db.execute("PRAGMA table_info(sources)")}
-                    if "result" not in columns:
-                        db.execute(
-                            "ALTER TABLE sources ADD COLUMN result TEXT NOT NULL DEFAULT '{}'"
-                        )
-                # executescript would implicitly commit the migration lock.
-                for statement in SCHEMA.split(";"):
-                    if statement.strip():
-                        db.execute(statement)
+            # user_version is set by the same transaction that creates the schema, so a
+            # current version means nothing is left to do. Skipping the write lock here
+            # keeps a burst of provider starts from queueing behind each other.
+            if self.db.execute("PRAGMA user_version").fetchone()[0] != SCHEMA_VERSION:
+                # Serialize version check, migration and schema creation across provider processes.
+                with self.transaction() as db:
+                    version = db.execute("PRAGMA user_version").fetchone()[0]
+                    if version not in {0, 2, 3, 4, 5, 6, 7, SCHEMA_VERSION}:
+                        raise RuntimeError(f"unsupported database version {version}")
+                    if version == 2:
+                        columns = {r[1] for r in db.execute("PRAGMA table_info(sources)")}
+                        if "result" not in columns:
+                            db.execute(
+                                "ALTER TABLE sources ADD COLUMN result TEXT NOT NULL DEFAULT '{}'"
+                            )
+                    # executescript would implicitly commit the migration lock.
+                    for statement in SCHEMA.split(";"):
+                        if statement.strip():
+                            db.execute(statement)
         except BaseException:
             self.db.close()
             raise

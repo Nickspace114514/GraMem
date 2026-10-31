@@ -34,6 +34,14 @@ class Relations:
             return False
         now = self.e.clock()
         selected = None
+        # Idle polls must not take the write lock. This is a superset of the loop's skip rule.
+        if not self.e.store.rows(
+            "SELECT 1 FROM memories WHERE status='active' "
+            "AND COALESCE(json_extract(metadata,'$.relation_extraction.revision'),-1)!=? "
+            "AND COALESCE(json_extract(metadata,'$.relation_extraction.retry_at'),0)<=? LIMIT 1",
+            (REVISION, now),
+        ):
+            return False
         with self.e.store.transaction() as db:
             for row in db.execute("SELECT * FROM memories WHERE status='active' ORDER BY updated,id"):
                 meta = json.loads(row['metadata'])

@@ -89,6 +89,13 @@ def review_one(engine):
     if not engine.config.auto_approve or not engine.model or not engine.model.available:
         return False
     now = engine.clock()
+    # Idle polls must not take the write lock; many pollers share one database.
+    if not engine.store.rows(
+        "SELECT 1 FROM memories WHERE status='candidate' "
+        "AND COALESCE(json_extract(metadata,'$.auto_review.retry_at'),0)<=? LIMIT 1",
+        (now,),
+    ):
+        return False
     lease = uuid.uuid4().hex
     snapshots, payload = [], []
     with engine.store.transaction() as db:
